@@ -9,6 +9,7 @@ parameters:
   - E16ds_v4_128_GB-Non-PRD
   - E20ds_v4_160
   - M32ts_192_GB
+  - M32ts_192_GB_ZRS
   - M32ls_256_GB
   - E48ds_v4_384
   - M64ls_512_GB
@@ -25,7 +26,7 @@ parameters:
 - name: location
   displayName: Target region
   type: string
-  default: "Germany West Central"
+  default: "North Europe"
   values:
   - "West Europe"
   - "North Europe"
@@ -35,13 +36,9 @@ parameters:
 - name: os
   displayName: Operating System
   type: string
-  default: "SLES 15 SP2"
+  default: "CUSTOM"
   values:
-  - "RHEL 7.7"
-  - "RHEL 8.1"
-  - "SLES 12 SP4"
-  - "SLES 12 SP5"
-  - "SLES 15 SP2"
+  - "CUSTOM"
 
 - name: sid
   displayName: HANA System ID
@@ -81,12 +78,12 @@ parameters:
 - name: encryptionset
   displayName: Disk encryption set name
   type: string
-  default: "SAPDiskEncryptionSet-germanywestcentral-004"
+  default: "SAPDiskEncryptionSetnortheurope"
 
 - name: mgmtrg
   displayName: Landing zone resource group
   type: string
-  default: "SAPonAzureGermanyWestCentral"
+  default: "SAPonAzureNorthEurope"
   values:
   - "SAPonAzureWestEurope"
   - "SAPonAzureNorthEurope"
@@ -97,7 +94,7 @@ parameters:
 - name: vnet
   displayName: Target VNET
   type: string
-  default: "vnet-sap-germanywestcentral-004"
+  default: "vnet-sap-northeurope-001"
   values:
   - "vnet-sap-prod-westeurope-001"
   - "vnet-sap-northeurope-001"
@@ -109,7 +106,7 @@ parameters:
 - name: subnet
   displayName: Target subnet
   type: string
-  default: "snet-sap-germanywestcentral-004"
+  default: "snet-sap-northeurope-001"
   values:
   - "snet-sap-prod-westeurope-001"
   - "snet-sap-northeurope-001"
@@ -229,7 +226,7 @@ stages:
         resourceGroupName: ${{ parameters.rg }}
         location: ${{ parameters.location }}
         templateLocation: 'Linked artifact'
-        csmFile: $(System.DefaultWorkingDirectory)/ARM-Template/sap-hana-vm.json
+        csmFile: $(System.DefaultWorkingDirectory)/ARM-Template/sap-hana-vm-custom.json
         overrideParameters: '-adminUsername "$(adminuser)" -adminPasswordOrKey "$(pubsshkey)" -vmNameInput "${{ parameters.vmname }}" -HostNameInput "${{ parameters.hostname }}" -hanaSystemId "${{ parameters.sid }}" -hanaSystemSize "${{ parameters.size }}" -osType "${{ parameters.os }}" -subnetId "$(subnetid)" -ipaddress ${{ parameters.ipaddress }} -availabilityZone ${{ parameters.availzone }} -Script_URL "$(url-disk-cfg)" -diagnosticsStorageAccount "$(diagnosticsstorageaccount)" -encryption "${{ parameters.encryption }}" -encryptionset  "${{ parameters.encryptionset }}" -encryptionsetrg "${{ parameters.mgmtrg }}" '
         deploymentMode: 'Incremental'
         deploymentName: 'hana-vm-${{ parameters.sid }}-$(Build.BuildId)'
@@ -351,7 +348,7 @@ stages:
         inventoryInlineContentAgentMachine: |
           [hana]
           $(privateip)
-        args: '-e s_user=$(S-Username) -e s_password="$(S-Password)" '
+        args: '-e s_user=$(S-Username) -e s_password=$(S-Password)'
         failOnStdErr: false
       env:
         ANSIBLE_DISPLAY_SKIPPED_HOSTS: False
@@ -445,11 +442,11 @@ stages:
         azureResourceManagerConnection: '$(AZURE_CONNECTION_NAME)'
         subscriptionId: '$(ARM_SUBSCRIPTION_ID)'
         action: 'Create Or Update Resource Group'
-        resourceGroupName: '${{ parameters.mgmtrg }}'
+        resourceGroupName: '$(mgmt-rg)'
         location: ${{ parameters.location }}
         templateLocation: 'Linked artifact'
         csmFile: '$(System.DefaultWorkingDirectory)/ARM-Template/backup-container.json'
-        overrideParameters: '-vaultName "$(rsv)" -vaultRG "${{ parameters.mgmtrg }}" -vaultSubID "$(ARM_SUBSCRIPTION_ID)" -protectionContainers ["$(backupcontainer)"] -sourceResourceIds ["$(vmid)"]'
+        overrideParameters: '-vaultName "$(rsv)" -vaultRG "$(mgmt-rg)" -vaultSubID "$(ARM_SUBSCRIPTION_ID)" -protectionContainers ["$(backupcontainer)"] -sourceResourceIds ["$(vmid)"]'
         deploymentMode: 'Incremental'
         deploymentName: 'hana-backup-container-${{ parameters.sid }}-$(Build.BuildId)'
 
@@ -462,7 +459,7 @@ stages:
         arguments: >
           -SID "${{ parameters.sid }}"
           -RSV "$(rsv)"
-          -RGV "${{ parameters.mgmtrg }}"
+          -RGV "$(mgmt-rg)"
           -VM "${{ parameters.vmname }}"
           -SERVER "${{ parameters.hostname }}"
           -VMRG "${{ parameters.rg }}"
@@ -483,7 +480,7 @@ stages:
         filePath: '$(System.DefaultWorkingDirectory)/Scripts/SelectiveDiskBackup.ps1'
         arguments: >
           -RSV "$(rsv)"
-          -RGV "${{ parameters.mgmtrg }}"
+          -RGV "$(mgmt-rg)"
           -VM "${{ parameters.vmname }}"
           -VMRG "${{ parameters.rg }}"
           -ARM_CLIENT_ID          "$(ARM_CLIENT_ID)"
@@ -539,7 +536,7 @@ stages:
         inventoryInlineContentAgentMachine: |
           [hana]
           $(privateip)
-        args: '-e sap_sid=${{ parameters.sid }} -e s_user=$(S-Username) -e s_password="$(S-Password)" '
+        args: '-e sap_sid=${{ parameters.sid }} -e s_user=$(S-Username) -e s_password=$(S-Password)'
         failOnStdErr: false
       env:
         ANSIBLE_DISPLAY_SKIPPED_HOSTS: False
@@ -583,7 +580,7 @@ stages:
         arguments: >
           -SID                     "${{ parameters.sid }}"
           -RSV                     "$(rsv)"
-          -RGV                     "${{ parameters.mgmtrg }}"
+          -RGV                     "$(mgmt-rg)"
           -VM                      "${{ parameters.vmname }}"
           -VMRG                    "${{ parameters.rg }}"
           -POL                    "NA"

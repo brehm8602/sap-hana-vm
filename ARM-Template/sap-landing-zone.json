@@ -9,6 +9,27 @@
             },
             "type": "String"
         },
+        "tenantid": {
+            "defaultValue": "[subscription().tenantId]",
+            "metadata": {
+                "description": "Will be set automatically base on the RG location"
+            },
+            "type": "String"
+        },
+        "uid": {
+            "defaultValue": "False",
+            "type": "string",
+            "metadata": {
+                "description": "Unique resource numbering (some resources names must be unique, e.g. keyvaults)"
+            }
+        },
+        "spnobjectid": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "SPN object Id, required to link keyvault and disk encryption set"
+            }
+        },
         "adminUsername": {
             "defaultValue": "azureadm",
             "type": "String",
@@ -16,24 +37,15 @@
                 "description": "Enter the admin user name for the Linux & Windows VM"
             }
         },
-        "authenticationType": {
-            "type": "string",
-            "defaultValue": "sshPublicKey",
-            "allowedValues": [
-            "sshPublicKey"
-            ],
-            "metadata": {
-                "description": "Only SSH login on Linux for this scenario"
-            }
-        },
         "adminPublicKey": {
+            "defaultValue": "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAr2zzJGCzNlgBPFPqYV0Ko2blSxk7ilbwzsN1UxH5EKLcHgIwQDljTMvZvvLhfBgEllkRvyotlZ+b+5rHP/rZ18mY/LLUc4pHQnXOFhs+SbzxAURwsStN+qKFx6+ZyJh0Kul4ZiIMm5S9LaX5jLrcvP2uRxi35/sYkrb53AK+b2HM7wxMpeOXJ9PHWOqRvMXZ/Dqlfn4oliDLh6UKwvABx7azWjRABs+X0nPwChPCRTXMJ5PC4iD+1CAcJpFhxHPzL13NWVoZqK1JgN4G0/4pcwI0XCFXHiAKs7sfbAMdMXesyrSQqLZ9grDDWbj5k8gbd4zW0Ig/tOFR32+WsDsxIQ==",
             "type": "securestring",
             "metadata": {
                 "description": "Enter SSH key for the Linux VM"
             }
         },
         "WindowsPassword": {
-            "defaultValue": "*************",
+            "defaultValue": "xyz-WIN-vm-123",
             "type": "SecureString",
             "metadata": {
                 "description": "Enter password for the Windows SAP Admin VM"
@@ -41,20 +53,20 @@
         },
         "PrivateDNSZoneName": {
             "type": "string",
-            "defaultValue": "sap.contoso.com",
+            "defaultValue": "sap.contoso.net",
             "metadata": {
                 "description": "Enter your private DNS zone"
             }
         },
         "SetupDeploymentAgentScriptURL": {
             "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/mimergel/sap-hana-vm/main/Scripts/setup-deployment-agent.sh",
+            "defaultValue": "https://raw.githubusercontent.com/mimergel/sap-hana-vm/beta/Scripts/configure_deployer.sh",
             "metadata": {
                 "description": "Enter your own script location if required"
             }
         },
         "SAPVNETName": {
-            "defaultValue": "[concat('vnet-sap-prod-',resourceGroup().location,'-001')]",
+            "defaultValue": "[concat('vnet-sap-', resourceGroup().location, '-', parameters('uid'))]",
             "type": "String"
         },
         "SAPVNETNameAddressSpace": {
@@ -64,7 +76,7 @@
             "type": "Array"
         },
         "SAPSubnetName": {
-            "defaultValue": "[concat('snet-sap-prod-',resourceGroup().location,'-001')]",
+            "defaultValue": "[concat('snet-sap-', resourceGroup().location, '-', parameters('uid'))]",
             "type": "String"
         },
         "SAPSubnetAddressRange": {
@@ -72,7 +84,7 @@
             "type": "String"
         },
         "SAPAdminSubnetName": {
-            "defaultValue": "[concat('snet-sap-admin-',resourceGroup().location,'-001')]",
+            "defaultValue": "[concat('snet-admin-', resourceGroup().location, '-', parameters('uid'))]",
             "type": "String"
         },
         "SAPAdminSubnetAddressRange": {
@@ -92,28 +104,61 @@
             "type": "string"
         },
         "SAPNSGName": {
-            "defaultValue": "[concat('nsg-sap-prod-',resourceGroup().location,'-001')]",
+            "defaultValue": "[concat('nsg-sap-',resourceGroup().location, '-', parameters('uid'))]",
             "type": "String"
         },
         "SAPAdminNSGName": {
-            "defaultValue": "[concat('nsg-sap-admin-',resourceGroup().location,'-001')]",
+            "defaultValue": "[concat('nsg-admin-',resourceGroup().location, '-', parameters('uid'))]",
             "type": "String"
         },
+        "AllowedIP": {
+            "defaultValue": "*",
+            "type": "String",
+            "metadata": {
+                "description": "default is * allowing all internet. set to a specific IP to limit access, e.g. 88.152.184.232/32"
+            }
+        },
         "RecoveryServiceVaultName": {
-            "defaultValue": "[concat('rsv-sap-',resourceGroup().location,'-001')]",
+            "defaultValue": "[concat('rsv-sap-',resourceGroup().location, '-', parameters('uid'))]",
             "type": "string"
+        },
+        "KeyVaultName": {
+            "defaultValue": "kv-(location)-uid",
+            "type": "string",
+            "metadata": {
+                "description": "Keyvault name will be generated as shown in default value"
+            }
+        },
+        "deploykeyvault": {
+            "defaultValue": "False",
+            "type": "string",
+            "metadata": {
+                "description": "Deploy a keyvault, True or False"
+            }
+        },
+        "encryptionkeyname": {
+            "defaultValue": "sap-disk-encryption-key",
+            "type": "string",
+            "metadata": {
+                "description": "Encryption key name for the disk encryption"
+            }
         },
         "VaultStorageType": {
             "type": "string",
-            "defaultValue": "GeoRedundant",
+            "defaultValue": "LocallyRedundant",
             "allowedValues": [
                 "LocallyRedundant",
+                "ZoneRedundant",
                 "GeoRedundant"
             ]
         },
         "VaultEnableCRR": {
-            "type": "bool",
-            "defaultValue": false
+            "type": "string",
+            "defaultValue": "False"
+        },
+        "deployerpip": {
+            "type": "string",
+            "defaultValue": "False"
         },
         "OSPolicyNamePRD": {
             "defaultValue": "pol-sapos-prod",
@@ -133,19 +178,11 @@
         },
         "DevOpsDeployerVMName": {
             "type": "String",
-            "defaultValue": "DEVOPSDEPLOYER"
+            "defaultValue": "[concat('deployer',resourceGroup().location)]"
         },
         "DevOpsDeployerComputerName": {
             "type": "String",
-            "defaultValue": "devopsdeployer"
-        },
-        "SAPWinAdminVMName": {
-            "type": "String",
-            "defaultValue": "SAPWINADMIN"
-        },
-        "SAPWinAdminComputerName": {
-            "type": "String",
-            "defaultValue": "sapwinadmin"
+            "defaultValue": "[concat('deployer',resourceGroup().location)]"
         },
         "DiskType": {
             "type": "String",
@@ -153,7 +190,7 @@
         },
         "DevOpsDeployerVirtualMachineSize": {
             "type": "String",
-            "defaultValue": "Standard_B1s"
+            "defaultValue": "Standard_B2s"
         },
         "SAPWinAdminVirtualMachineSize": {
             "type": "String",
@@ -195,7 +232,7 @@
             "type": "Bool"
         },
         "allowBlobPublicAccess": {
-            "defaultValue": true,
+            "defaultValue": false,
             "type": "Bool"
         },
         "allowSharedKeyAccess": {
@@ -498,14 +535,50 @@
                 }
             ],
             "type": "Array"
+        },
+        "automationaccountName": {
+            "type": "String",
+            "defaultValue": "[concat('automation-sap-',resourceGroup().location, '-', parameters('uid'))]",
+            "metadata": {
+                "description": "Name of the automation account"
+            }
+        },
+        "sampleGraphicalRunbookName": {
+            "type": "String",
+            "defaultValue": "AzureAutomationTutorialWithIdentityGraphical"
+        },
+        "sampleGraphicalRunbookDescription": {
+            "type": "String",
+            "defaultValue": "An example runbook which gets all the ARM resources using the Managed Identity."
+        },
+        "sampleGraphicalRunbookContentUri": {
+            "type": "String",
+            "defaultValue": "https://eus2oaasibizamarketprod1.blob.core.windows.net/marketplace-runbooks/AzureAutomationTutorialNewGraphical.graphrunbook"
+        },
+        "samplePowerShellRunbookName": {
+            "type": "String",
+            "defaultValue": "AzureAutomationTutorialWithIdentity"
+        },
+        "samplePowerShellRunbookDescription": {
+            "type": "String",
+            "defaultValue": "An example runbook which gets all the ARM resources using the Managed Identity."
+        },
+        "samplePowerShellRunbookContentUri": {
+            "type": "String",
+            "defaultValue": "https://eus2oaasibizamarketprod1.blob.core.windows.net/marketplace-runbooks/AzureAutomationTutorialNew.ps1"
         }
     },
     "variables": {
         "resourcegroupId": "[resourceGroup().id]",
-        "bastionPublicIPName": "[concat(parameters('bastionHostName'), 'pip')]",
-        "shortlocation": "[take(resourceGroup().location,10)]",
-        "storageAccountNameSAPBits": "[concat(parameters('storageAccountNameSAPBits'),variables('shortlocation'))]",
-        "storageAccountNameDiagnostics": "[concat(parameters('storageAccountNameDiagnostics'),variables('shortlocation'))]",
+        "bastionPublicIPName": "[concat(parameters('bastionHostName'), '-pip')]",
+        "deployerpublicIPName": "[concat(parameters('DevOpsDeployerVMName'), '-pip')]",
+        "shortlocation9": "[take(resourceGroup().location,9)]",
+        "shortlocation10": "[take(resourceGroup().location,10)]",
+        "SAPWinAdminVMName15": "[concat('winadm',variables('shortlocation9'))]",
+        "SAPWinAdminComputerName15": "[concat('winadm',variables('shortlocation9'))]",
+        "storageAccountNameSAPBits": "[concat(parameters('storageAccountNameSAPBits'),variables('shortlocation10'))]",
+        "storageAccountNameDiagnostics": "[concat(parameters('storageAccountNameDiagnostics'),variables('shortlocation10'))]",
+        "KeyVaultName": "[concat('kv-', variables('shortlocation10'), '-', parameters('uid'))]",
         "vmRegistration": true,
         "VARnetworkAclsVirtualNetworkRules": [
             {
@@ -517,7 +590,7 @@
 
         ],
         "DevOpsDeployerNWInterfaceName": "[concat(parameters('DevOpsDeployerVMName'), '-nic')]",
-        "SAPWinAdminNWInterfaceName": "[concat(parameters('SAPWinAdminVMName'), '-nic')]",
+        "SAPWinAdminNWInterfaceName": "[concat(variables('SAPWinAdminVMName15'), '-nic')]",
         "DevOpsDeployerOS": "Linux",
         "DevOpsDeployerCSExtension": {
             "Linux": {
@@ -525,7 +598,7 @@
             "Name": "CustomScript",
             "Version": "2.0",
             "script": "[parameters('SetupDeploymentAgentScriptURL')]",
-            "scriptCall": "[concat('sh setup-deployment-agent.sh ', parameters('adminUsername'))]"
+            "scriptCall": "[concat('./configure_deployer.sh ', parameters('adminUsername'))]"
             }
         }
     },
@@ -539,29 +612,15 @@
             "properties": {
                 "securityRules": [
                     {
-                        "name": "RDP",
-                        "properties": {
-                        "description": "Allow RDP",
-                        "protocol": "Tcp",
-                        "sourcePortRange": "*",
-                        "destinationPortRange": "3389",
-                        "sourceAddressPrefix": "Internet",
-                        "destinationAddressPrefix": "*",
-                        "access": "Deny",
-                        "priority": 100,
-                        "direction": "Inbound"
-                    }
-                    },
-                    {
                         "name": "SSH",
                         "properties": {
                         "description": "Allow SSH",
                         "protocol": "Tcp",
                         "sourcePortRange": "*",
                         "destinationPortRange": "22",
-                        "sourceAddressPrefix": "Internet",
+                        "sourceAddressPrefix": "VirtualNetwork",
                         "destinationAddressPrefix": "*",
-                        "access": "Deny",
+                        "access": "Allow",
                         "priority": 200,
                         "direction": "Inbound"
                        }
@@ -613,12 +672,12 @@
                         "protocol": "Tcp",
                         "sourcePortRange": "*",
                         "destinationPortRange": "3389",
-                        "sourceAddressPrefix": "Internet",
+                        "sourceAddressPrefix": "[if(equals(parameters('AllowedIP'),'*'), 'Internet', parameters('AllowedIP'))]",
                         "destinationAddressPrefix": "*",
                         "access": "Allow",
                         "priority": 100,
                         "direction": "Inbound"
-                    }
+                        }
                     },
                     {
                         "name": "SSH",
@@ -627,7 +686,7 @@
                         "protocol": "Tcp",
                         "sourcePortRange": "*",
                         "destinationPortRange": "22",
-                        "sourceAddressPrefix": "Internet",
+                        "sourceAddressPrefix": "[if(equals(parameters('AllowedIP'),'*'), 'Internet', parameters('AllowedIP'))]",
                         "destinationAddressPrefix": "*",
                         "access": "Allow",
                         "priority": 200,
@@ -647,6 +706,19 @@
             },
             "sku": {
                 "name": "Standard"
+            }
+        },
+        {
+            "condition": "[equals(parameters('deployerpip'),'True')]",
+            "name": "[variables('deployerpublicIPName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-05-01",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
             }
         },
         {
@@ -780,7 +852,7 @@
             ],
             "properties": {
                 "StorageModelType": "[parameters('VaultStorageType')]",
-                "CrossRegionRestoreFlag": "[parameters('VaultEnableCRR')]"
+                "CrossRegionRestoreFlag": "[if(equals(parameters('VaultEnableCRR'),'False'), bool('false'), bool('true'))]"
             }
         },
         {
@@ -953,10 +1025,13 @@
                     {
                         "name": "devopsdeployeripconfig",
                         "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[if(equals(parameters('deployerpip'),'True'), resourceId('Microsoft.Network/publicIPAddresses', variables('deployerpublicIPName')), json('null'))]"
+                            },
                             "subnet": {
                                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('SAPVNETName'),parameters('SAPAdminSubnetName'))]"
-                            },
-                            "privateIPAllocationMethod": "Dynamic"
+                            }
                         }
                     }
                 ]
@@ -983,8 +1058,8 @@
                     },
                     "imageReference": {
                         "publisher": "Canonical",
-                        "offer": "UbuntuServer",
-                        "sku": "18.04-LTS",
+                        "offer": "0001-com-ubuntu-server-focal",
+                        "sku": "20_04-lts",
                         "version": "latest"
                     }
                 },
@@ -1063,7 +1138,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2021-03-01",
-            "name": "[parameters('SAPWinAdminVMName')]",
+            "name": "[variables('SAPWinAdminVMName15')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', variables('SAPWinAdminNWInterfaceName'))]"
@@ -1094,7 +1169,7 @@
                     ]
                 },
                 "osProfile": {
-                    "computerName": "[parameters('SAPWinAdminComputerName')]",
+                    "computerName": "[variables('SAPWinAdminComputerName15')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('WindowsPassword')]",
                     "windowsConfiguration": {
@@ -1108,7 +1183,176 @@
                 },
                 "licenseType": "Windows_Client"
             }
+        },
+        {
+            "type": "Microsoft.Automation/automationAccounts",
+            "apiVersion": "2021-06-22",
+            "name": "[parameters('automationaccountName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "tags": {},
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "sku": {
+                    "name": "Basic"
+                },
+                "publicNetworkAccess": true
+            },
+            "resources": [
+                {
+                    "type": "runbooks",
+                    "apiVersion": "2019-06-01",
+                    "name": "[parameters('sampleGraphicalRunbookName')]",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('automationaccountName'))]"
+                    ],
+                    "tags": {},
+                    "properties": {
+                        "runbookType": "GraphPowerShell",
+                        "logProgress": false,
+                        "logVerbose": false,
+                        "description": "[parameters('sampleGraphicalRunbookDescription')]",
+                        "publishContentLink": {
+                            "uri": "[parameters('sampleGraphicalRunbookContentUri')]",
+                            "version": "1.0.0.0"
+                        }
+                    }
+                },
+                {
+                    "type": "runbooks",
+                    "apiVersion": "2019-06-01",
+                    "name": "[parameters('samplePowerShellRunbookName')]",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('automationaccountName'))]"
+                    ],
+                    "tags": {},
+                    "properties": {
+                        "runbookType": "PowerShell",
+                        "logProgress": false,
+                        "logVerbose": false,
+                        "description": "[parameters('samplePowerShellRunbookDescription')]",
+                        "publishContentLink": {
+                            "uri": "[parameters('samplePowerShellRunbookContentUri')]",
+                            "version": "1.0.0.0"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "condition": "[equals(parameters('deploykeyvault'),'True')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('KeyVaultName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "Standard"
+                },
+                "tenantId": "[parameters('tenantid')]",
+                "accessPolicies": [
+                    {
+                        "tenantId": "[parameters('tenantid')]",
+                        "objectId": "[parameters('spnobjectid')]",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Delete"
+                            ],
+                            "secrets": [
+                                "Get",
+                                "List",
+                                "Set",
+                                "Delete"
+                            ],
+                            "certificates": []
+                        }
+                    }
+                ],
+                "enabledForDeployment": false,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": false,
+                "enableRbacAuthorization": false,
+                "networkAcls": {
+                    "defaultAction": "allow",
+                    "bypass": "AzureServices",
+                    "ipRules": [],
+                    "virtualNetworkRules": []
+                },
+                "vaultUri": "[concat('https://', variables('KeyVaultName'), '.vault.azure.net/')]",
+                "provisioningState": "Succeeded",
+                "publicNetworkAccess": "Enabled"
+            }
+        },
+        {
+            "condition": "[equals(parameters('deploykeyvault'),'True')]",
+            "type": "Microsoft.KeyVault/vaults/keys",
+            "apiVersion": "2019-09-01",
+            "name": "[concat(variables('KeyVaultName'), '/', parameters('encryptionkeyname'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('KeyVaultName'))]"
+            ],
+            "properties": {
+                "kty": "RSA",
+                "keySize": 2048,
+                "attributes": {
+                    "enabled": true
+                }
+            }
+        },
+        {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "name": "[concat('loganalytics-workspace', resourceGroup().location, '-', parameters('uid'))]",
+            "apiVersion": "2020-08-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "sku": {
+                    "name": "pergb2018"
+                },
+                "retentionInDays": 30,
+                "features": {
+                    "enableLogAccessUsingOnlyResourcePermissions": true
+                }
+            },
+            "resources": [
+                {
+                "type": "Microsoft.OperationalInsights/workspaces/tables",
+                "apiVersion": "2020-08-01",
+                "name": "[concat('loganalytics-workspace', resourceGroup().location, '-', parameters('uid'),'/','Heartbeat')]",
+                "dependsOn": [
+                    "[concat('loganalytics-workspace', resourceGroup().location, '-', parameters('uid'))]"
+                ],
+                "properties": {
+                    "RetentionInDays": "30"
+                    }
+                }
+            ]
         }
     ],
-    "outputs": {}
+    "outputs": {
+      "diagnosticsstorageaccount": {
+        "value": "[variables('storageAccountNameDiagnostics')]",
+        "type": "string"
+      },
+      "keyvault": {
+        "value": "[variables('KeyVaultName')]",
+        "type": "string"
+      },
+      "mgmtrg": {
+        "value": "[resourceGroup().name]",
+        "type": "string"
+      },
+      "deployerpip": {
+        "value": "[if(equals(parameters('deployerpip'),'True'), resourceId('Microsoft.Network/publicIPAddresses', variables('deployerpublicIPName')), json('null'))]",
+        "type": "string"
+      }
+    }
 }

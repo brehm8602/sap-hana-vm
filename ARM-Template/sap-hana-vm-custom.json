@@ -59,6 +59,7 @@
       "hanaSystemSize": {
         "type": "string",
         "allowedValues": [
+          "E8s_v3",
           "E16ds_v4_128_GB-Non-PRD",
           "E20ds_v4_160",
           "M32ts_192_GB",
@@ -186,42 +187,7 @@
         "CUSTOM": {
           "publisher": "CUSTOM",
           "OSType": "Linux",
-          "id": "/subscriptions/35b67b4c-4fd4-4f0b-997c-bbb82032d45d/resourceGroups/SAPonAzureGermany/providers/Microsoft.Compute/galleries/mylinuximages/images/mysles15/versions/0.0.1"
-        },
-        "RHEL 7.7": {
-          "sku": "77sapha-gen2",
-          "offer": "RHEL-SAP-HA",
-          "publisher": "RedHat",
-          "OSType": "Linux",
-          "version": "latest"
-        },
-        "RHEL 8.1": {
-          "sku": "81sapha-gen2",
-          "offer": "RHEL-SAP-HA",
-          "publisher": "RedHat",
-          "OSType": "Linux",
-          "version": "latest"
-        },
-        "RHEL 8.2": {
-          "sku": "82sapha-gen2",
-          "offer": "RHEL-SAP-HA",
-          "publisher": "RedHat",
-          "OSType": "Linux",
-          "version": "latest"
-        },
-        "SLES 12 SP5": {
-          "sku": "gen2",
-          "offer": "sles-sap-12-sp5",
-          "publisher": "SUSE",
-          "OSType": "Linux",
-          "version": "latest"
-        },
-        "SLES 15 SP2": {
-          "sku": "gen2",
-          "offer": "sles-sap-15-sp2",
-          "publisher": "SUSE",
-          "OSType": "Linux",
-          "version": "latest"
+          "id": "/subscriptions/35b67b4c-4fd4-4f0b-997c-bbb82032d45d/resourceGroups/SAPonAzureGermany/providers/Microsoft.Compute/galleries/myrhelimages/images/CUSTOMRHEL/versions/0.0.1"
         }
       },
       "internalOSType": "[variables('images')[parameters('osType')].OSType]",
@@ -2229,10 +2195,7 @@
           },
           "storageProfile": {
             "imageReference": {
-              "publisher": "[variables('images')[parameters('osType')].publisher]",
-              "offer": "[variables('images')[parameters('osType')].offer]",
-              "sku": "[variables('images')[parameters('osType')].sku]",
-              "version": "[variables('images')[parameters('osType')].version]"
+              "id": "[variables('images')[parameters('osType')].id]"
             },
             "osDisk": {
               "name": "[concat(variables('vmName'), '-os-disk')]",
