@@ -4,7 +4,7 @@ parameters:
 - name: size
   displayName: SAP VM Size
   type: string
-  default: Standard_E2ds_v4
+  default: Standard_E4ds_v4
   values:
   - Standard_E2ds_v4
   - Standard_E4ds_v4
@@ -13,7 +13,51 @@ parameters:
   - Standard_E32ds_v4
   - Standard_E48ds_v4
   - Standard_E64ds_v4
-  - Standard_E80ids_v4
+  - Standard_D2ds_v4
+  - Standard_D4ds_v4
+  - Standard_D8ds_v4
+  - Standard_D16ds_v4
+  - Standard_D32ds_v4
+  - Standard_D48ds_v4
+  - Standard_D64ds_v4
+  - Standard_E2ds_v5
+  - Standard_E4ds_v5
+  - Standard_E8ds_v5
+  - Standard_E16ds_v5
+  - Standard_E32ds_v5
+  - Standard_E48ds_v5
+  - Standard_E64ds_v5
+  - Standard_E96ds_v5
+  - Standard_D2ds_v5
+  - Standard_D4ds_v5
+  - Standard_D8ds_v5
+  - Standard_D16ds_v5
+  - Standard_D32ds_v5
+  - Standard_D48ds_v5
+  - Standard_D64ds_v5
+  - Standard_D96ds_v5
+
+- name: osdisksize
+  displayName: SAP disk size in GB
+  type: string
+  default: "64"
+  values:
+  - "64"
+  - "128"
+  - "256"
+  - "512"
+  - "1024"
+
+- name: sapdisksize
+  displayName: SAP disk size in GB
+  type: string
+  default: "128"
+  values:
+  - "64"
+  - "128"
+  - "256"
+  - "512"
+  - "1024"
 
 - name: os
   displayName: Operating System
@@ -28,23 +72,23 @@ parameters:
   - "CUSTOM"
 
 - name: encryption
-  displayName: Enable double encryption with CMK
+  displayName: Enable double encryption with PMK & CMK
   type: boolean
   default: "true"
 
 - name: encryptionset
   displayName: Disk encryption set name
   type: string
-  default: "SAPDiskEncryptionSetGEWC"
+  default: "SAPDiskEncryptionSet-germanywestcentral-004"
 
 - name: encryptionsetrg
   displayName: Disk encryption set resource group
   type: string
-  default: "SAPonAzureGermany"
+  default: "SAPonAzureGermanyWestCentral"
   values:
   - "SAPonAzureWestEurope"
   - "SAPonAzureNorthEurope"
-  - "SAPonAzureGermany"
+  - "SAPonAzureGermanyWestCentral"
   - "SAPonAzureFrance"
   - "SAPonAzureWestUS"
 
@@ -61,7 +105,7 @@ parameters:
 - name: rg
   displayName: HANA VM resource group
   type: string
-  default: "RG-SAPTEST"
+  default: "RG-SAPTEST-TST"
 
 - name: vmname
   displayName: SAP VM Name in Azure
@@ -88,44 +132,45 @@ parameters:
   - "France Central"
   - "Germany West Central"
 
+- name: mgmtrg
+  displayName: Landing zone resource group
+  type: string
+  default: "SAPonAzureGermanyWestCentral"
+  values:
+  - "SAPonAzureWestEurope"
+  - "SAPonAzureNorthEurope"
+  - "SAPonAzureGermanyWestCentral"
+  - "SAPonAzureFranceCentral"
+  - "SAPonAzureWestUS"
+
 - name: vnet
   displayName: Target VNET
   type: string
-  default: "vnet-sap-prod-germanywestcentral-001"
+  default: "vnet-sap-germanywestcentral-004"
   values:
   - "vnet-sap-prod-westeurope-001"
-  - "vnet-sap-prod-germanywestcentral-001"
-  - "SAPDemoEnvironmentNetwork"
+  - "vnet-sap-northeurope-001"
+  - "vnet-sap-germanywestcentral-004"
+  - "vnet-sap-francecentral-001"
   - "DEV-NOEU-SAP02-vnet"
   - "MIM-GEWC-SAP04-vnet"
 
 - name: subnet
   displayName: Target subnet
   type: string
-  default: "snet-sap-prod-germanywestcentral-001"
+  default: "snet-sap-germanywestcentral-004"
   values:
   - "snet-sap-prod-westeurope-001"
-  - "snet-sap-prod-germanywestcentral-001"
-  - "sapprdsubnet"
+  - "snet-sap-northeurope-001"
+  - "snet-sap-germanywestcentral-004"
+  - "snet-sap-francecentral-001"
   - "DEV-NOEU-SAP02_db-subnet"
   - "MIM-GEWC-SAP04_db-subnet"
-
-- name: vnetrg
-  displayName: VNET resource group
-  type: string
-  default: "SAPonAzureGermany"
-  values:
-  - "MIM-GEWC-SAP04-INFRASTRUCTURE"
-  - "SAPonAzureWestEurope"
-  - "SAPonAzureNorthEurope"
-  - "SAPonAzureGermany"
-  - "SAPonAzureFrance"
-  - "SAPonAzureWestUS"
 
 - name: availzone
   displayName: Availability zone
   type: number
-  default: 1
+  default: 0
   values:
   - 0
   - 1
@@ -185,7 +230,7 @@ variables:
   - name: vmid
     value: /subscriptions/$(ARM_SUBSCRIPTION_ID)/resourceGroups/${{ parameters.rg }}/providers/Microsoft.Compute/virtualMachines/${{ parameters.vmname }}
   - name: subnetid
-    value: /subscriptions/$(ARM_SUBSCRIPTION_ID)/resourceGroups/${{ parameters.vnetrg }}/providers/Microsoft.Network/virtualNetworks/${{ parameters.vnet }}/subnets/${{ parameters.subnet }}
+    value: /subscriptions/$(ARM_SUBSCRIPTION_ID)/resourceGroups/${{ parameters.mgmtrg }}/providers/Microsoft.Network/virtualNetworks/${{ parameters.vnet }}/subnets/${{ parameters.subnet }}
   - name: osvar
     value: ${{ parameters.os }}
   - name: usepyth3
@@ -224,7 +269,7 @@ stages:
         location: ${{ parameters.location }}
         templateLocation: 'Linked artifact'
         csmFile: $(System.DefaultWorkingDirectory)/ARM-Template/sap-app-vm.json
-        overrideParameters: '-adminUsername "$(adminuser)" -adminPasswordOrKey "$(pubsshkey)" -vmNameInput "${{ parameters.vmname }}" -HostNameInput "${{ parameters.hostname }}" -sapSystemId "${{ parameters.sid }}" -sapSystemSize "${{ parameters.size }}" -osType "${{ parameters.os }}" -subnetId "$(subnetid)" -ipaddress ${{ parameters.ipaddress }} -availabilityZone ${{ parameters.availzone }} -Script_URL "$(url-disk-cfg)" -diagnosticsStorageAccount "$(diagnosticsstorageaccount)" -encryption "${{ parameters.encryption }}" -encryptionset "${{ parameters.encryptionset }}" -encryptionsetrg "${{ parameters.encryptionsetrg }}" '
+        overrideParameters: '-adminUsername "$(adminuser)" -adminPasswordOrKey "$(pubsshkey)" -vmNameInput "${{ parameters.vmname }}" -HostNameInput "${{ parameters.hostname }}" -sapSystemId "${{ parameters.sid }}" -sapSystemSize "${{ parameters.size }}" -osType "${{ parameters.os }}" -subnetId "$(subnetid)" -ipaddress ${{ parameters.ipaddress }} -availabilityZone ${{ parameters.availzone }} -Script_URL "$(url-disk-cfg)" -diagnosticsStorageAccount "$(diagnosticsstorageaccount)" -encryption "${{ parameters.encryption }}" -encryptionset "${{ parameters.encryptionset }}" -encryptionsetrg "${{ parameters.encryptionsetrg }}" -sapdisksize "${{ parameters.sapdisksize }}" -osdisksize "${{ parameters.osdisksize }}" '
         deploymentMode: 'Incremental'
         deploymentName: 'sap-vm-${{ parameters.sid }}-$(Build.BuildId)'
         deploymentOutputs: 'arm_output'
