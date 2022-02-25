@@ -607,9 +607,18 @@ stages:
         #!/bin/bash
         privateip=`cat $(System.DefaultWorkingDirectory)/Inventory/${{ parameters.rg }}/${{ parameters.vmname }}.hanaprivateip`
         echo "##vso[task.setvariable variable=privateip]$privateip"
-        exit 0
-      displayName: Get private IP for following ansible tasks 
+        if [[ "$(osvar)" == "SLES"* ]]; then
+          distro="SUSE"
+          echo $distro
+          echo "##vso[task.setvariable variable=distro]$distro"
+        elif [[ "$(osvar)" == "RHEL"* ]]; then
+          distro="RedHat"
+          echo $distro
+          echo "##vso[task.setvariable variable=distro]$distro"
+        fi
+      displayName: Get private IP, Linux distribution and perform az login
       failOnStderr: false
+
     - task: Ansible@0
       displayName: 'Run Quality checks (Ansible)'
       inputs:
@@ -619,13 +628,10 @@ stages:
         inventoryInlineContentAgentMachine: |
           [hana]
           $(privateip)
-        args: '-e rg=${{ parameters.rg }} -e vmname=${{ parameters.vmname }} '
+        args: '-vvvv -e distro=$(distro) -e rg=${{ parameters.rg }} -e vmname=${{ parameters.vmname }} -e adminuser=$(adminuser) -e ip=$(privateip) -e inventory="$(System.DefaultWorkingDirectory)/Inventory" -e workdir="$(System.DefaultWorkingDirectory)" -e "ARM_CLIENT_ID=$(ARM_CLIENT_ID)" -e "ARM_TENANT_ID=$(ARM_TENANT_ID)" -e "ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)" -e "ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)" '
         failOnStdErr: false
       env:
-        ANSIBLE_DISPLAY_SKIPPED_HOSTS: False
-        ANSIBLE_HOST_KEY_CHECKING: False
-        ANSIBLE_SSH_HOST_KEY_CHECKING: False
-        ANSIBLE_ALLOW_WORLD_READABLE_TMPFILES: True
+        SYSTEM_ACCESSTOKEN:      $(System.AccessToken)
 
     - script: |
         #!/bin/bash
