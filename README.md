@@ -356,6 +356,8 @@ Automated SAP Installation and deployment via an Azure DevOps Pipeline functiona
 	* WORLD_READABLE_TMPFILES not set to True in ansible.cfg file on deployer or higher ansible used where this flag is not supported any more
 * InvalidParameter: Destination path for SSH public keys is currently limited to its default value /home/$(adminuser)/.ssh/authorized_keys  due to a known issue in Linux provisioning agent.
 	* Make sure the adminuser variable is set and corresponds to the adminuser during initial deployment of the HANA VM
+* Deployment template validation failed: 'The value for the template parameter 'adminPasswordOrKey' at line '43' and column '29' is not provided. 
+ 	* Please provide your own public ssh key that has been created upfront. The ARM template doesn't handle an option "Generate new key pair"
 
 # FAQ
 * Where is the HCMT result?
