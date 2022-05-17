@@ -311,6 +311,9 @@ Automated SAP Installation and deployment via an Azure DevOps Pipeline functiona
 
 [![Deploy SAP VM to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmimergel%2Fsap-hana-vm%2Fmain%2FARM-Template%2Fsap-app-vm.json) 
 
+# Azure DevOps Agent
+Use this ARM template to deploy the Azure DevOps Agent only.
+
 [![Deploy only the DevOps deployer to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmimergel%2Fsap-hana-vm%2Fmain%2FARM-Template%2Fdevops-deployment-agent.json) 
 
 
