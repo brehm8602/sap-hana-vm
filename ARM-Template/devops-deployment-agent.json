@@ -55,7 +55,7 @@
             "Name": "CustomScript",
             "Version": "2.0",
             "script": "[parameters('Script_URL')]",
-            "scriptCall": "[concat('sh setup-deployment-agent.sh ', parameters('adminUsername'))]"
+            "scriptCall": "[concat('sh configure_deployer.sh ', parameters('adminUsername'))]"
             }
         }
     },
